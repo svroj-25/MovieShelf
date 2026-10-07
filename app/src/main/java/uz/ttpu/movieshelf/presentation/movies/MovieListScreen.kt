@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -25,11 +28,13 @@ import androidx.compose.ui.unit.dp
 import uz.ttpu.movieshelf.domain.model.Movie
 import uz.ttpu.movieshelf.ui.theme.MovieShelfTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieListScreen(
     state: MovieListUiState,
     onFavoriteClick: (Int) -> Unit,
     onRefresh: () -> Unit,
+    onFavoritesOnlyChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(modifier = modifier.fillMaxSize()) { innerPadding ->
@@ -78,6 +83,18 @@ fun MovieListScreen(
                                 )
                             }
                         }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            FilterChip(
+                                selected = state.favoritesOnly,
+                                onClick = { onFavoritesOnlyChange(!state.favoritesOnly) },
+                                label = { Text("Favorites only") }
+                            )
+                        }
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(state.movies, key = { it.id }) { movie ->
                                 MovieItem(
@@ -111,7 +128,8 @@ fun SuccessFreshPreview() {
                     Movie(1, "The Shawshank Redemption", 1994, 9.3, true),
                     Movie(2, "The Godfather", 1972, 9.2, false)
                 ),
-                isFromCache = false
+                isFromCache = false,
+                favoritesOnly = false
             ),
             onFavoriteClick = {},
             onRefresh = {}
@@ -128,7 +146,8 @@ fun SuccessCachedPreview() {
                 movies = listOf(
                     Movie(1, "The Shawshank Redemption", 1994, 9.3, false)
                 ),
-                isFromCache = true
+                isFromCache = true,
+                favoritesOnly = false
             ),
             onFavoriteClick = {},
             onRefresh = {}

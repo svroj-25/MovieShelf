@@ -40,6 +40,7 @@ class MainActivity : ComponentActivity() {
                     val factory = remember {
                         MovieListViewModelFactory(
                             container.getMoviesUseCase,
+                            container.getFavoriteMoviesUseCase,
                             container.toggleFavoriteUseCase
                         )
                     }
@@ -52,7 +53,8 @@ class MainActivity : ComponentActivity() {
                         MovieListScreen(
                             state = state,
                             onFavoriteClick = viewModel::onFavoriteClick,
-                            onRefresh = viewModel::loadMovies
+                            onRefresh = viewModel::loadMovies,
+                            onFavoritesOnlyChange = viewModel::onFavoritesOnlyChange
                         )
 
                         // Debug switch for fake network failure
