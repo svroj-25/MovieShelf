@@ -1,5 +1,42 @@
 package uz.ttpu.movieshelf.presentation.movies
 
+/*
+========================================================================================
+15-VAZIFA TAHLILI: CLEANFLOW VA DEPENDENCY RULE
+========================================================================================
+
+(1) Chaqiruvlar tartibi (Control Flow):
+    MovieItem (UI yurak bosilishi)
+        ↓
+    MovieListViewModel.onFavoriteClick(movieId)
+        ↓
+    ToggleFavoriteUseCase.invoke(movieId)
+        ↓
+    MovieRepositoryImpl.toggleFavorite(movieId)
+        ↓
+    SharedPrefsMovieLocalDataSource.setFavorite(movieId, newState)
+
+(2) Bog'liqlik o'qlari (Source Code Dependencies) va Teskari Yo'nalish:
+    • Boshqaruv oqimi (Control Flow): Presentation -> Domain -> Data tomon harakatlanadi.
+    • Manba-kod bog'liqliklari (Dependency Rule): Barcha o'qlar faqat ICHKARIGA, ya'ni DOMAIN qatlamiga qaraydi:
+        - Presentation -> Domain (ViewModel use case'larga bog'liq)
+        - Data -> Domain (MovieRepositoryImpl domenning MovieRepository interfeysini amalga oshiradi)
+    • Qaysi o'q chaqiruvga teskari yo'nalgan?
+      ToggleFavoriteUseCase -> MovieRepositoryImpl chaqiruvi. Chaqiruv Domain'dan Data'ga qarab ketadi,
+      lekin kod bog'liqligi Data'dan Domain'ga qarab yo'nalgan (MovieRepositoryImpl -> MovieRepository).
+      Bu "Dependency Inversion Principle" (DIP) orqali amalga oshirilgan: use case aniq klassga emas,
+      o'zining domen interfeysiga suyanadi.
+
+(3) Nima uchun Use Case Log.d'ni chaqira olmaydi va domendan loglashning toza usuli:
+    • android.util.Log Android SDK framework'iga tegishli. Domain moduli esa sof Kotlin (JVM) moduli bo'lib,
+      unda Android SDK kutubxonalari umuman mavjud emas va bo'lmasligi kerak (mustaqillik tamoyili).
+    • Domendan toza log yozish usuli — yana Dependency Inversion'dan foydalanish:
+      Domen modulida toza Kotlin `interface AppLogger { fun d(tag: String, msg: String) }` e'lon qilinadi.
+      Tashqi presentation yoki data modulida esa ushbu interfeysni Android Log.d orqali amalga oshiruvchi
+      `class AndroidAppLogger : AppLogger` klassi yoziladi va DI (AppContainer) orqali uzatiladi.
+========================================================================================
+*/
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +94,6 @@ class MovieListViewModel(
                 val current = _uiState.value
                 if (current is MovieListUiState.Success) {
                     if (isFavoritesOnly && !newState) {
-                        // Sevimlilikdan chiqarilgan kino darhol yo'qolsin
                         val updated = current.movies.filter { it.id != movieId }
                         _uiState.value = current.copy(movies = updated)
                     } else {
